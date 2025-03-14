@@ -4,6 +4,8 @@ import com.example.journalist.entity.JournalEntity;
 import com.example.journalist.services.JournalService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,34 +18,53 @@ public class JournalController {
     private JournalService service;
 
     @GetMapping
-    public List<JournalEntity> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<JournalEntity>> getAll() {
+        List<JournalEntity> journals = service.getAll();
+        return new ResponseEntity<>(journals, HttpStatus.OK);
     }
 
     @PostMapping
-    public boolean createEntity(@RequestBody JournalEntity myEntry) {
+    public ResponseEntity<JournalEntity> createEntity(@RequestBody JournalEntity myEntry) {
         myEntry.setDate(LocalDateTime.now());
         service.createEntity(myEntry);
-        return true;
+        return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
     }
 
     @GetMapping("/id/{myId}")
-    public JournalEntity findElementById(@PathVariable ObjectId id) {
-        return service.findById(id).orElse(null);
+    public ResponseEntity<JournalEntity> findElementById(@PathVariable ObjectId id) {
+        JournalEntity journal = service.findById(id).orElse(null);
+        if (journal == null) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(journal, HttpStatus.OK);
     }
 
     @DeleteMapping("/id/{myId}")
-    public void deleteById(@PathVariable ObjectId myId) {
-        service.deleteById(myId);
-    }
-    @PostMapping("/id/{myId})")
-    public boolean updateElementById(@PathVariable ObjectId myId,@RequestBody JournalEntity myEntry) {
-        JournalEntity old = service.findById(myId).orElse(null);
-        if (old != null) {
-            old.setTitle(myEntry.getTitle() != null && myEntry.getTitle().isEmpty() ? myEntry.getTitle() : old.getTitle());
-            old.setContent(myEntry.getContent() != null && myEntry.getTitle().isEmpty() ? myEntry.getContent() : old.getContent());
+    public ResponseEntity<Void> deleteById(@PathVariable ObjectId myId) {
+        try {
+            service.deleteById(myId);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        service.createEntity(myEntry);
-        return true;
+    }
+
+    @PutMapping("/id/{myId}") // Use PUT for updates instead of POST
+    public ResponseEntity<JournalEntity> updateElementById(@PathVariable ObjectId myId, @RequestBody JournalEntity myEntry) {
+        JournalEntity old = service.findById(myId).orElse(null);
+        if (old == null) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+
+        // Corrected logic for updating fields
+        if (myEntry.getTitle() != null && !myEntry.getTitle().isEmpty()) {
+            old.setTitle(myEntry.getTitle());
+        }
+        if (myEntry.getContent() != null && !myEntry.getContent().isEmpty()) {
+            old.setContent(myEntry.getContent());
+        }
+
+        service.createEntity(old); // Update the existing entity
+        return new ResponseEntity<>(old, HttpStatus.OK);
     }
 }
