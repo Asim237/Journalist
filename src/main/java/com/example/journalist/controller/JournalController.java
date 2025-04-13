@@ -37,7 +37,6 @@ public class JournalController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
     }
 
     @GetMapping("/id/{myId}")

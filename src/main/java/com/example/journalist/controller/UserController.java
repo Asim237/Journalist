@@ -20,13 +20,11 @@ public class UserController {
     public ResponseEntity<List<UserEntity>> getAll() {
         return new ResponseEntity<>(userService.getAll(), HttpStatus.OK);
     }
-
     @PostMapping
     public ResponseEntity<UserEntity> createUser(@RequestBody UserEntity userEntity) {
         userService.createEntity(userEntity);
         return new ResponseEntity<>(userEntity, HttpStatus.CREATED);
     }
-
     @PutMapping("/userName/{userName}")
     public ResponseEntity<UserEntity> updateUser(@RequestBody UserEntity userEntity, @PathVariable String userName) {
         UserEntity userInDB = userService.findByUserName(userName);
@@ -38,7 +36,6 @@ public class UserController {
         }
         return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
-
     @DeleteMapping("{userName}")
     public ResponseEntity<?> deleteByUserName(@PathVariable String userName) {
         UserEntity user = userService.findByUserName(userName);
